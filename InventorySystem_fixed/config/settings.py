@@ -214,8 +214,10 @@ MEDIA_URL = "/media/"
 _media_root = BASE_DIR / "media"
 try:
     os.makedirs(_media_root, exist_ok=True)
-    if not os.access(_media_root, os.W_OK):
-        raise OSError("media dir not writable")
+    _probe = _media_root / ".write_test"
+    with open(_probe, "w") as _f:
+        _f.write("x")
+    _probe.unlink()
     MEDIA_ROOT = _media_root
 except OSError:
     MEDIA_ROOT = Path("/tmp/media")
@@ -258,13 +260,17 @@ LOGGING = {
 }
 # Don't trust env-var platform detection here - serverless platforms don't
 # always expose it to the running function the way they do at build time.
-# Instead, actually try to create the logs directory; only wire up the file
-# handler if that succeeds, so a read-only filesystem (Vercel, most
-# serverless platforms) degrades to console-only logging instead of crashing
-# the whole app on startup. Console output is captured by Vercel's own logs.
+# Also don't trust os.access(W_OK) - a read-only *mount* (which is what
+# Vercel actually uses) still reports writable permission bits, so
+# os.access() lies here. The only reliable test is to actually write a byte
+# and see if the filesystem rejects it.
 try:
     os.makedirs(BASE_DIR / "logs", exist_ok=True)
-    _logs_writable = os.access(BASE_DIR / "logs", os.W_OK)
+    _probe = BASE_DIR / "logs" / ".write_test"
+    with open(_probe, "w") as _f:
+        _f.write("x")
+    _probe.unlink()
+    _logs_writable = True
 except OSError:
     _logs_writable = False
 
