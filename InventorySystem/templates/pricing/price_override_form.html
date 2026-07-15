@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Override Price{% endblock %}
+{% block content %}
+<h3 class="mb-4">Override Price: {{ product.name }}</h3>
+<p>Current price: ₱{{ product.selling_price }}</p>
+<div class="card" style="max-width:480px;"><div class="card-body">
+<form method="post">{% csrf_token %}
+{% for field in form %}<div class="mb-3"><label class="form-label">{{ field.label }}</label>{{ field }}
+{% if field.errors %}<div class="text-danger small">{{ field.errors }}</div>{% endif %}</div>{% endfor %}
+<button class="btn btn-primary" type="submit">Update Price</button>
+<a href="{% url 'inventory:product_detail' product.pk %}" class="btn btn-outline-secondary">Cancel</a>
+</form></div></div>
+{% endblock %}

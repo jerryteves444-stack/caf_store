@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% block title %}Point of Sale{% endblock %}
+{% block content %}
+<div class="row g-3">
+    <div class="col-lg-8">
+        <div class="card mb-3">
+            <div class="card-body">
+                <input type="text" id="productSearch" class="form-control form-control-lg" placeholder="Scan barcode or search product / meat...">
+            </div>
+        </div>
+        <div class="row g-2" id="productGrid"></div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">Cart</div>
+            <div class="card-body p-2">
+                <table class="table table-sm mb-2">
+                    <thead><tr><th>Item</th><th>Qty</th><th>Price</th><th></th></tr></thead>
+                    <tbody id="cartBody"></tbody>
+                </table>
+                <div class="mb-2">
+                    <label class="form-label small">Customer (optional, required for credit)</label>
+                    <select id="customerSelect" class="form-select form-select-sm">
+                        <option value="">Walk-in customer</option>
+                    </select>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small">Payment Method</label>
+                    <select id="paymentMethod" class="form-select form-select-sm">
+                        {% for val, label in payment_methods %}
+                        <option value="{{ val }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small">Discount Amount</label>
+                    <input type="number" id="discountAmount" class="form-control form-control-sm" value="0" min="0" step="0.01">
+                </div>
+                <div class="mb-2" id="tenderedWrapper">
+                    <label class="form-label small">Amount Tendered</label>
+                    <input type="number" id="amountTendered" class="form-control form-control-sm" min="0" step="0.01">
+                </div>
+                <div class="d-flex justify-content-between fw-bold fs-5 border-top pt-2">
+                    <span>Total</span><span id="cartTotal">₱0.00</span>
+                </div>
+                <div id="checkoutError" class="text-danger small mt-2"></div>
+                <button id="checkoutBtn" class="btn btn-success w-100 mt-2">Complete Sale</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const PRODUCTS = {{ products_json|safe }};
+const MEATS = {{ meats_json|safe }};
+const CUSTOMERS = {{ customers_json|safe }};
+const TAX_RATE = 0.12;
+let cart = [];
+
+function renderProducts(filter) {
+    const grid = document.getElementById('productGrid');
+    grid.innerHTML = '';
+    const term = (filter || '').toLowerCase();
+
+    PRODUCTS.filter(p => !term || p.name.toLowerCase().includes(term) || p.product_code.toLowerCase().includes(term) || (p.barcode_value || '').toLowerCase() === term)
+        .forEach(p => {
+            const price = p.promo_price || p.discount_price || p.selling_price;
+            grid.innerHTML += `<div class="col-6 col-md-4">
+                <div class="card pos-product-card h-100" onclick='addToCart("PRODUCT", ${p.id}, "${p.name.replace(/"/g,'')}", ${price}, ${p.quantity})'>
+                    <div class="card-body p-2 text-center">
+                        <div class="small fw-semibold">${p.name}</div>
+                        <div class="text-success">₱${Number(price).toFixed(2)}</div>
+                        <div class="text-muted small">${p.quantity} in stock</div>
+                    </div>
+                </div></div>`;
+        });
+
+    MEATS.filter(m => !term || m.meat_type.toLowerCase().includes(term) || m.meat_code.toLowerCase().includes(term))
+        .forEach(m => {
+            grid.innerHTML += `<div class="col-6 col-md-4">
+                <div class="card pos-product-card h-100" onclick='addToCart("MEAT", ${m.id}, "${m.meat_type}", ${m.selling_price_per_kg}, ${m.remaining_stock_kg})'>
+                    <div class="card-body p-2 text-center">
+                        <div class="small fw-semibold">${m.meat_type} (kg)</div>
+                        <div class="text-success">₱${Number(m.selling_price_per_kg).toFixed(2)}/kg</div>
+                        <div class="text-muted small">${m.remaining_stock_kg} kg left</div>
+                    </div>
+                </div></div>`;
+        });
+}
+
+function addToCart(itemType, id, name, price, maxQty) {
+    let line = cart.find(l => l.item_type === itemType && l.item_id === id);
+    if (line) {
+        if (line.quantity + 1 > maxQty) { alert('Not enough stock.'); return; }
+        line.quantity += 1;
+    } else {
+        cart.push({ item_type: itemType, item_id: id, name: name, unit_price: price, quantity: 1, max_qty: maxQty, line_discount: 0 });
+    }
+    renderCart();
+}
+
+function renderCart() {
+    const body = document.getElementById('cartBody');
+    body.innerHTML = '';
+    let subtotal = 0;
+    cart.forEach((line, idx) => {
+        const lineTotal = (line.quantity * line.unit_price) - line.line_discount;
+        subtotal += lineTotal;
+        body.innerHTML += `<tr>
+            <td>${line.name}</td>
+            <td><input type="number" min="0.01" step="0.01" value="${line.quantity}" style="width:70px" class="form-control form-control-sm" onchange="updateQty(${idx}, this.value)"></td>
+            <td>₱${lineTotal.toFixed(2)}</td>
+            <td><button class="btn btn-sm btn-outline-danger" onclick="removeLine(${idx})">&times;</button></td>
+        </tr>`;
+    });
+    const discount = parseFloat(document.getElementById('discountAmount').value || 0);
+    const taxable = Math.max(subtotal - discount, 0);
+    const tax = taxable * TAX_RATE;
+    const total = taxable + tax;
+    document.getElementById('cartTotal').innerText = '₱' + total.toFixed(2);
+}
+
+function updateQty(idx, val) {
+    const qty = parseFloat(val);
+    if (qty <= 0 || qty > cart[idx].max_qty) { alert('Invalid quantity.'); renderCart(); return; }
+    cart[idx].quantity = qty;
+    renderCart();
+}
+
+function removeLine(idx) { cart.splice(idx, 1); renderCart(); }
+
+document.getElementById('productSearch').addEventListener('input', e => renderProducts(e.target.value));
+document.getElementById('discountAmount').addEventListener('input', renderCart);
+
+CUSTOMERS.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id; opt.innerText = c.name;
+    document.getElementById('customerSelect').appendChild(opt);
+});
+
+document.getElementById('paymentMethod').addEventListener('change', function () {
+    document.getElementById('tenderedWrapper').style.display = this.value === 'CASH' ? 'block' : 'none';
+});
+
+document.getElementById('checkoutBtn').addEventListener('click', function () {
+    const errorBox = document.getElementById('checkoutError');
+    errorBox.innerText = '';
+    if (cart.length === 0) { errorBox.innerText = 'Cart is empty.'; return; }
+
+    const payload = {
+        cart: cart.map(l => ({ item_type: l.item_type, item_id: l.item_id, quantity: l.quantity, line_discount: l.line_discount })),
+        customer_id: document.getElementById('customerSelect').value || null,
+        payment_method: document.getElementById('paymentMethod').value,
+        amount_tendered: document.getElementById('amountTendered').value || null,
+        discount_amount: document.getElementById('discountAmount').value || 0,
+    };
+
+    fetch("{% url 'sales:checkout_api' %}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        body: JSON.stringify(payload),
+    }).then(r => r.json()).then(data => {
+        if (data.success) { window.location.href = data.redirect_url; }
+        else { errorBox.innerText = data.error; }
+    });
+});
+
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
+renderProducts('');
+</script>
+{% endblock %}

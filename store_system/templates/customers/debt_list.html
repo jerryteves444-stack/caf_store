@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Customer Debts{% endblock %}
+{% block content %}
+<h3 class="mb-4">Customer Debt Tracking</h3>
+<form method="get" class="row g-2 mb-3">
+    <div class="col-auto">{{ search_form.q }}</div>
+    <div class="col-auto">{{ search_form.status }}</div>
+    <div class="col-auto"><button class="btn btn-outline-secondary">Filter</button></div>
+</form>
+<div class="card">
+<table class="table table-hover mb-0">
+    <thead><tr><th>Customer</th><th>Total</th><th>Paid</th><th>Balance</th><th>Due Date</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+    {% for d in debts %}
+    <tr>
+        <td>{{ d.customer.name }}</td><td>₱{{ d.total_amount }}</td><td>₱{{ d.amount_paid }}</td><td>₱{{ d.remaining_balance }}</td>
+        <td>{{ d.due_date }}</td>
+        <td>
+            {% if d.payment_status == "PAID" %}<span class="badge bg-success">Paid</span>
+            {% elif d.payment_status == "PARTIAL" %}<span class="badge bg-warning text-dark">Partial</span>
+            {% elif d.payment_status == "OVERDUE" %}<span class="badge bg-danger">Overdue</span>
+            {% else %}<span class="badge bg-secondary">Unpaid</span>{% endif %}
+        </td>
+        <td><a href="{% url 'customers:debt_detail' d.pk %}" class="btn btn-sm btn-outline-secondary">View</a></td>
+    </tr>
+    {% empty %}<tr><td colspan="7" class="text-center text-muted py-3">No debt records.</td></tr>{% endfor %}
+    </tbody>
+</table>
+</div>
+{% include "partials/pagination.html" %}
+{% endblock %}

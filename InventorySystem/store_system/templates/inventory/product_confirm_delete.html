@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Delete Product{% endblock %}
+{% block content %}
+<h3 class="text-danger mb-4">Delete Product</h3>
+<div class="card" style="max-width: 480px;">
+    <div class="card-body">
+        <p>Are you sure you want to permanently delete <strong>{{ product.name }}</strong>? This cannot be undone.</p>
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Yes, Delete Permanently</button>
+            <a href="{% url 'inventory:product_list' %}" class="btn btn-outline-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

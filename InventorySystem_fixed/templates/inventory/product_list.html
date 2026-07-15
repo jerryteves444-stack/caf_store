@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Products{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">Products (Canned &amp; Dry Goods)</h3>
+    <a href="{% url 'inventory:product_add' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Add Product</a>
+</div>
+<form method="get" class="row g-2 mb-3">
+    <div class="col-auto">{{ search_form.q }}</div>
+    <div class="col-auto">{{ search_form.category }}</div>
+    <div class="col-auto">{{ search_form.product_type }}</div>
+    <div class="col-auto">{{ search_form.stock_status }}</div>
+    <div class="col-auto"><button class="btn btn-outline-secondary" type="submit">Filter</button></div>
+</form>
+<div class="card">
+<table class="table table-hover mb-0">
+    <thead><tr>
+        <th><a href="?sort=product_code">Code</a></th>
+        <th><a href="?sort=name">Name</a></th>
+        <th>Type</th><th>Category</th>
+        <th><a href="?sort=quantity">Qty</a></th>
+        <th><a href="?sort=selling_price">Price</a></th>
+        <th>Expiry</th><th>Status</th><th></th>
+    </tr></thead>
+    <tbody>
+    {% for p in products %}
+        <tr>
+            <td>{{ p.product_code }}</td>
+            <td><a href="{% url 'inventory:product_detail' p.pk %}">{{ p.name }}</a></td>
+            <td>{{ p.get_product_type_display }}</td>
+            <td>{{ p.category.name }}</td>
+            <td>{{ p.quantity }}</td>
+            <td>₱{{ p.current_price }}</td>
+            <td>{{ p.expiration_date|default:"—" }}</td>
+            <td>
+                {% if p.is_out_of_stock %}<span class="badge bg-danger">Out</span>
+                {% elif p.is_low_stock %}<span class="badge bg-warning text-dark">Low</span>
+                {% else %}<span class="badge bg-success">OK</span>{% endif %}
+                {% if p.is_expiring_soon %}<span class="badge bg-info text-dark">Expiring</span>{% endif %}
+            </td>
+            <td class="text-nowrap">
+                <a href="{% url 'inventory:product_edit' p.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                <a href="{% url 'inventory:product_delete' p.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
+            </td>
+        </tr>
+    {% empty %}
+        <tr><td colspan="9" class="text-center text-muted py-3">No products found.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% include "partials/pagination.html" %}
+{% endblock %}

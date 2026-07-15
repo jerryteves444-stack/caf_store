@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}{{ supplier.company_name }}{% endblock %}
+{% block content %}
+<h3 class="mb-4">{{ supplier.company_name }}</h3>
+<p>Contact: {{ supplier.contact_person }} | Phone: {{ supplier.phone }} | Email: {{ supplier.email }}</p>
+<div class="card mb-3"><div class="card-header">Products Supplied</div>
+<table class="table mb-0"><thead><tr><th>Code</th><th>Name</th><th>Qty</th></tr></thead>
+<tbody>{% for p in products %}<tr><td>{{ p.product_code }}</td><td>{{ p.name }}</td><td>{{ p.quantity }}</td></tr>{% empty %}<tr><td colspan="3" class="text-center text-muted py-3">No products linked.</td></tr>{% endfor %}</tbody></table></div>
+<div class="card"><div class="card-header">Recent Purchase Orders</div>
+<table class="table mb-0"><thead><tr><th>PO #</th><th>Status</th><th>Date</th></tr></thead>
+<tbody>{% for po in purchase_orders %}<tr><td><a href="{% url 'purchases:po_detail' po.pk %}">{{ po.po_number }}</a></td><td>{{ po.get_status_display }}</td><td>{{ po.created_at|date:"M d, Y" }}</td></tr>{% empty %}<tr><td colspan="3" class="text-center text-muted py-3">No purchase orders yet.</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

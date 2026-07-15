@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}{{ meat.meat_code }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3">
+<h3>{{ meat.get_meat_type_display }} <small class="text-muted">{{ meat.meat_code }}</small></h3>
+<a href="{% url 'meat:meat_edit' meat.pk %}" class="btn btn-outline-secondary btn-sm">Edit</a>
+</div>
+<div class="row g-3 mb-4">
+    <div class="col-md-4"><div class="card"><div class="card-body"><div class="text-muted small">Remaining Stock</div><div class="fs-4 fw-bold">{{ meat.remaining_stock_kg }} kg</div></div></div></div>
+    <div class="col-md-4"><div class="card"><div class="card-body"><div class="text-muted small">Cost / kg</div><div class="fs-4 fw-bold">₱{{ meat.cost_per_kg }}</div></div></div></div>
+    <div class="col-md-4"><div class="card"><div class="card-body"><div class="text-muted small">Selling Price / kg</div><div class="fs-4 fw-bold">₱{{ meat.selling_price_per_kg }}</div></div></div></div>
+</div>
+<div class="card mb-3"><div class="card-header">Update Stock</div><div class="card-body">
+<form method="post" action="{% url 'meat:meat_stock_update' meat.pk %}" class="row g-2">
+    {% csrf_token %}
+    <div class="col-auto">{{ stock_form.action }}</div>
+    <div class="col-auto">{{ stock_form.weight_kg }}</div>
+    <div class="col-auto">{{ stock_form.notes }}</div>
+    <div class="col-auto"><button class="btn btn-primary">Apply</button></div>
+</form>
+</div></div>
+<div class="card"><div class="card-header">Recent Transactions</div>
+<table class="table mb-0"><thead><tr><th>Type</th><th>Weight (kg)</th><th>By</th><th>Date</th></tr></thead>
+<tbody>{% for t in transactions %}<tr><td>{{ t.get_transaction_type_display }}</td><td>{{ t.weight_kg }}</td><td>{{ t.performed_by }}</td><td>{{ t.created_at|date:"M d, H:i" }}</td></tr>{% empty %}<tr><td colspan="4" class="text-center text-muted py-2">No transactions yet.</td></tr>{% endfor %}</tbody>
+</table></div>
+{% endblock %}

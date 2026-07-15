@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Statement - {{ customer.name }}{% endblock %}
+{% block content %}
+<div class="no-print mb-3"><button class="btn btn-outline-primary" onclick="window.print()"><i class="bi bi-printer"></i> Print</button></div>
+<h4>Customer Statement: {{ customer.name }}</h4>
+<p>Phone: {{ customer.phone_number }} | Address: {{ customer.address }}</p>
+<table class="table"><thead><tr><th>Date</th><th>Total</th><th>Paid</th><th>Balance</th><th>Due</th><th>Status</th></tr></thead>
+<tbody>{% for d in debts %}<tr><td>{{ d.created_at|date:"M d, Y" }}</td><td>₱{{ d.total_amount }}</td><td>₱{{ d.amount_paid }}</td><td>₱{{ d.remaining_balance }}</td><td>{{ d.due_date }}</td><td>{{ d.get_payment_status_display }}</td></tr>{% endfor %}</tbody>
+</table>
+{% endblock %}

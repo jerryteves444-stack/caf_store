@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Meat Batch Form{% endblock %}
+{% block content %}
+<h3 class="mb-4">{% if object %}Edit Meat Batch{% else %}Add Meat Batch{% endif %}</h3>
+<div class="card" style="max-width:720px;"><div class="card-body">
+<form method="post">
+    {% csrf_token %}
+    <div class="row">
+    {% for field in form %}
+        <div class="col-md-6 mb-3">
+            <label class="form-label">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}<div class="text-danger small">{{ field.errors }}</div>{% endif %}
+        </div>
+    {% endfor %}
+    </div>
+    <button class="btn btn-primary" type="submit">Save</button>
+    <a href="{% url 'meat:meat_list' %}" class="btn btn-outline-secondary">Cancel</a>
+</form>
+</div></div>
+{% endblock %}

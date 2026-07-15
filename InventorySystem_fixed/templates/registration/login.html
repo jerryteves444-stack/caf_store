@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Login{% endblock %}
+{% block auth_content %}
+<div class="d-flex align-items-center justify-content-center auth-shell">
+    <div class="card auth-card" style="width: 380px;">
+        <div class="card-body p-4">
+            <div class="text-center mb-4">
+                <i class="bi bi-shop fs-1" style="color: var(--banana-accent-dark);"></i>
+                <h4 class="mt-2 mb-0">GroceryMeat POS</h4>
+                <small class="text-muted">Sales &amp; Inventory Management System</small>
+            </div>
+            {% if form.errors %}
+            <div class="alert alert-danger py-2 small">Invalid username or password.</div>
+            {% endif %}
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags|default:'info' }} py-2 small">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label">Username</label>
+                    {{ form.username }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Password</label>
+                    {{ form.password }}
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Sign In</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

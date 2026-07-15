@@ -1,0 +1,45 @@
+:root {
+    --sidebar-width: 260px;
+}
+body {
+    background-color: #f5f7fa;
+}
+[data-bs-theme="dark"] body {
+    background-color: #12151a;
+}
+.sidebar {
+    width: var(--sidebar-width);
+    min-height: 100vh;
+    position: sticky;
+    top: 0;
+}
+.sidebar .nav-link.active,
+.sidebar .nav-link:hover {
+    background-color: rgba(255,255,255,0.12);
+}
+.main-content {
+    min-width: 0;
+}
+.card {
+    border: none;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.stat-card .stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+}
+@media (max-width: 767.98px) {
+    .sidebar {
+        position: fixed;
+        z-index: 1040;
+        left: -100%;
+        transition: left 0.2s ease-in-out;
+    }
+    .sidebar.show { left: 0; }
+}
+.pos-product-card { cursor: pointer; transition: transform .1s; }
+.pos-product-card:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,.12); }
+.receipt-box { max-width: 480px; margin: 0 auto; font-family: 'Courier New', monospace; }
+@media print {
+    .no-print { display: none !important; }
+}

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Promotions{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3">
+<h3>Scheduled Promotions</h3>
+<a href="{% url 'pricing:promo_add' %}" class="btn btn-primary">Schedule Promotion</a>
+</div>
+<div class="card"><table class="table mb-0"><thead><tr><th>Product</th><th>Promo Price</th><th>Start</th><th>End</th><th>Active</th></tr></thead>
+<tbody>{% for p in promos %}<tr><td>{{ p.product.name }}</td><td>₱{{ p.promo_price }}</td><td>{{ p.start_date }}</td><td>{{ p.end_date }}</td><td>{% if p.is_currently_active %}<span class="badge bg-success">Active Now</span>{% else %}<span class="badge bg-secondary">Scheduled/Ended</span>{% endif %}</td></tr>
+{% empty %}<tr><td colspan="5" class="text-center text-muted py-3">No promotions scheduled.</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

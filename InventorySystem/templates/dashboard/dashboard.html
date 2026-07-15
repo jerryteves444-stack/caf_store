@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h3 class="mb-4">Dashboard</h3>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="card stat-card"><div class="card-body">
+        <div class="text-muted small">Today's Sales</div>
+        <div class="stat-value text-success">₱{{ today_sales|floatformat:2 }}</div>
+    </div></div></div>
+    <div class="col-md-3"><div class="card stat-card"><div class="card-body">
+        <div class="text-muted small">Monthly Sales</div>
+        <div class="stat-value text-primary">₱{{ monthly_sales|floatformat:2 }}</div>
+    </div></div></div>
+    <div class="col-md-3"><div class="card stat-card"><div class="card-body">
+        <div class="text-muted small">Total Revenue</div>
+        <div class="stat-value">₱{{ total_revenue|floatformat:2 }}</div>
+    </div></div></div>
+    <div class="col-md-3"><div class="card stat-card"><div class="card-body">
+        <div class="text-muted small">Total Products</div>
+        <div class="stat-value">{{ total_products }}</div>
+    </div></div></div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="card stat-card"><div class="card-body">
+        <div class="text-muted small">Total Customers</div>
+        <div class="stat-value">{{ total_customers }}</div>
+    </div></div></div>
+    <div class="col-md-3"><div class="card stat-card"><div class="card-body">
+        <div class="text-muted small">Total Suppliers</div>
+        <div class="stat-value">{{ total_suppliers }}</div>
+    </div></div></div>
+    <div class="col-md-3"><div class="card stat-card"><div class="card-body">
+        <div class="text-muted small">Meat Inventory (kg)</div>
+        <div class="stat-value">{{ total_meat_inventory_kg|floatformat:1 }}</div>
+    </div></div></div>
+    <div class="col-md-3"><div class="card stat-card"><div class="card-body">
+        <div class="text-muted small">Livestock Batches</div>
+        <div class="stat-value">{{ total_livestock_batches }}</div>
+    </div></div></div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-6"><div class="card"><div class="card-body">
+        <h6 class="card-title">Daily Sales (last 14 days)</h6>
+        <canvas id="dailySalesChart" height="120"></canvas>
+    </div></div></div>
+    <div class="col-lg-6"><div class="card"><div class="card-body">
+        <h6 class="card-title">Monthly Sales</h6>
+        <canvas id="monthlySalesChart" height="120"></canvas>
+    </div></div></div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-4"><div class="card"><div class="card-body">
+        <h6 class="card-title">Best Selling Products</h6>
+        <canvas id="bestSellerChart"></canvas>
+    </div></div></div>
+    <div class="col-lg-4"><div class="card"><div class="card-body">
+        <h6 class="card-title">Inventory Levels</h6>
+        <canvas id="inventoryChart"></canvas>
+    </div></div></div>
+    <div class="col-lg-4"><div class="card"><div class="card-body">
+        <h6 class="card-title">Products by Category</h6>
+        <canvas id="categoryChart"></canvas>
+    </div></div></div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between">
+                <span>Low / Out of Stock</span>
+                <a href="{% url 'inventory:low_stock' %}" class="small">View all</a>
+            </div>
+            <ul class="list-group list-group-flush">
+                {% for p in low_stock_products|slice:":5" %}
+                <li class="list-group-item d-flex justify-content-between">
+                    <span>{{ p.name }}</span><span class="badge bg-warning text-dark">{{ p.quantity }} left</span>
+                </li>
+                {% endfor %}
+                {% for p in out_of_stock_products|slice:":5" %}
+                <li class="list-group-item d-flex justify-content-between">
+                    <span>{{ p.name }}</span><span class="badge bg-danger">Out of stock</span>
+                </li>
+                {% endfor %}
+                {% if not low_stock_products and not out_of_stock_products %}
+                <li class="list-group-item text-muted">All stock levels healthy.</li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between">
+                <span>Customers with Outstanding Debt</span>
+                <a href="{% url 'customers:debt_list' %}" class="small">View all</a>
+            </div>
+            <ul class="list-group list-group-flush">
+                {% for d in customers_with_debt %}
+                <li class="list-group-item d-flex justify-content-between">
+                    <span>{{ d.customer.name }}</span><span class="badge bg-secondary">₱{{ d.remaining_balance }}</span>
+                </li>
+                {% empty %}
+                <li class="list-group-item text-muted">No outstanding balances.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header">Recent Transactions</div>
+    <table class="table mb-0">
+        <thead><tr><th>Invoice</th><th>Customer</th><th>Cashier</th><th>Total</th><th>Status</th><th>Date</th></tr></thead>
+        <tbody>
+        {% for s in recent_transactions %}
+        <tr>
+            <td><a href="{% url 'sales:sale_receipt' s.pk %}">{{ s.invoice_number }}</a></td>
+            <td>{{ s.customer.name|default:"Walk-in" }}</td>
+            <td>{{ s.cashier.username }}</td>
+            <td>₱{{ s.total_amount }}</td>
+            <td><span class="badge bg-info text-dark">{{ s.get_payment_status_display }}</span></td>
+            <td>{{ s.created_at|date:"M d, Y H:i" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="text-center text-muted py-3">No transactions yet.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const chartColors = ['#0d6efd','#6610f2','#198754','#fd7e14','#dc3545','#20c997','#0dcaf0','#6c757d'];
+
+new Chart(document.getElementById('dailySalesChart'), {
+    type: 'line',
+    data: { labels: {{ daily_sales_labels|safe }}, datasets: [{ label: 'Sales', data: {{ daily_sales_values|safe }}, borderColor: '#0d6efd', tension: 0.3, fill: false }] },
+    options: { plugins: { legend: { display: false } } }
+});
+
+new Chart(document.getElementById('monthlySalesChart'), {
+    type: 'bar',
+    data: { labels: {{ monthly_sales_labels|safe }}, datasets: [{ label: 'Sales', data: {{ monthly_sales_values|safe }}, backgroundColor: '#198754' }] },
+    options: { plugins: { legend: { display: false } } }
+});
+
+new Chart(document.getElementById('bestSellerChart'), {
+    type: 'bar',
+    data: { labels: {{ best_seller_labels|safe }}, datasets: [{ label: 'Units Sold', data: {{ best_seller_values|safe }}, backgroundColor: chartColors }] },
+    options: { indexAxis: 'y', plugins: { legend: { display: false } } }
+});
+
+new Chart(document.getElementById('inventoryChart'), {
+    type: 'bar',
+    data: { labels: {{ inventory_labels|safe }}, datasets: [{ label: 'Quantity', data: {{ inventory_values|safe }}, backgroundColor: '#fd7e14' }] },
+    options: { plugins: { legend: { display: false } } }
+});
+
+new Chart(document.getElementById('categoryChart'), {
+    type: 'doughnut',
+    data: { labels: {{ category_labels|safe }}, datasets: [{ data: {{ category_values|safe }}, backgroundColor: chartColors }] },
+});
+</script>
+{% endblock %}

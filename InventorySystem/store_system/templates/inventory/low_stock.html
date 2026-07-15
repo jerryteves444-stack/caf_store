@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Low / Out of Stock{% endblock %}
+{% block content %}
+<h3 class="mb-4">Low / Out of Stock Products</h3>
+<div class="card">
+<table class="table mb-0">
+    <thead><tr><th>Code</th><th>Name</th><th>Qty</th><th>Reorder Level</th><th>Status</th></tr></thead>
+    <tbody>
+    {% for p in products %}
+    <tr>
+        <td>{{ p.product_code }}</td><td>{{ p.name }}</td><td>{{ p.quantity }}</td><td>{{ p.reorder_level }}</td>
+        <td>{% if p.is_out_of_stock %}<span class="badge bg-danger">Out of Stock</span>{% else %}<span class="badge bg-warning text-dark">Low Stock</span>{% endif %}</td>
+    </tr>
+    {% empty %}<tr><td colspan="5" class="text-center text-muted py-3">All stock levels healthy.</td></tr>{% endfor %}
+    </tbody>
+</table>
+</div>
+{% endblock %}

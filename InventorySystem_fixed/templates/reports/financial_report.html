@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Financial Report{% endblock %}
+{% block content %}
+<h3 class="mb-4">Financial Report</h3>
+<form method="get" class="row g-2 mb-3">
+    <div class="col-auto"><input type="date" name="start" class="form-control" value="{{ start|date:'Y-m-d' }}"></div>
+    <div class="col-auto"><input type="date" name="end" class="form-control" value="{{ end|date:'Y-m-d' }}"></div>
+    <div class="col-auto"><button class="btn btn-outline-secondary">Apply</button></div>
+    <div class="col-auto"><a class="btn btn-outline-success" href="?{{ request.GET.urlencode }}&export=csv">CSV</a></div>
+    <div class="col-auto"><a class="btn btn-outline-success" href="?{{ request.GET.urlencode }}&export=excel">Excel</a></div>
+    <div class="col-auto"><a class="btn btn-outline-success" href="?{{ request.GET.urlencode }}&export=pdf">PDF</a></div>
+</form>
+<div class="row g-3">
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">Revenue</div><div class="fs-4 fw-bold text-success">₱{{ summary.revenue }}</div></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">Expenses (COGS)</div><div class="fs-4 fw-bold text-danger">₱{{ summary.expenses_cogs }}</div></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">Profit</div><div class="fs-4 fw-bold">₱{{ summary.profit }}</div></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">Sale Count</div><div class="fs-4 fw-bold">{{ summary.sale_count }}</div></div></div></div>
+</div>
+<p class="text-muted small mt-3">Note: COGS is computed from each product/meat's *current* cost price at report time. For a fully point-in-time-accurate figure, extend SaleItem to snapshot cost_price at the moment of sale.</p>
+{% endblock %}

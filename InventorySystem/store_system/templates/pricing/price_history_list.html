@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Price History{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3">
+<h3>Price History</h3>
+<div><a href="{% url 'pricing:markup_calculator' %}" class="btn btn-outline-secondary btn-sm">Markup Calculator</a>
+<a href="{% url 'pricing:promo_list' %}" class="btn btn-outline-secondary btn-sm">Promotions</a></div>
+</div>
+<div class="card">
+<table class="table mb-0"><thead><tr><th>Item</th><th>Old Price</th><th>New Price</th><th>Reason</th><th>Changed By</th><th>Date</th></tr></thead>
+<tbody>{% for h in history %}<tr><td>{{ h.product|default:h.meat }}</td><td>₱{{ h.old_price }}</td><td>₱{{ h.new_price }}</td><td>{{ h.reason }}</td><td>{{ h.changed_by }}</td><td>{{ h.changed_at|date:"M d, Y H:i" }}</td></tr>
+{% empty %}<tr><td colspan="6" class="text-center text-muted py-3">No price changes recorded yet.</td></tr>{% endfor %}</tbody></table>
+</div>
+{% include "partials/pagination.html" %}
+{% endblock %}

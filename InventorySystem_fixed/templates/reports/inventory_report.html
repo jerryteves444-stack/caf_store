@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Inventory Report{% endblock %}
+{% block content %}
+<h3 class="mb-4">Inventory Report</h3>
+<form method="get" class="row g-2 mb-3">
+    <div class="col-auto">
+        <select name="type" class="form-select">
+            <option value="current" {% if report_type == "current" %}selected{% endif %}>Current Inventory</option>
+            <option value="low_stock" {% if report_type == "low_stock" %}selected{% endif %}>Low Stock</option>
+            <option value="out_of_stock" {% if report_type == "out_of_stock" %}selected{% endif %}>Out of Stock</option>
+            <option value="expiring" {% if report_type == "expiring" %}selected{% endif %}>Expiring Products</option>
+        </select>
+    </div>
+    <div class="col-auto"><button class="btn btn-outline-secondary">Apply</button></div>
+    <div class="col-auto"><a class="btn btn-outline-success" href="?type={{ report_type }}&export=csv">CSV</a></div>
+    <div class="col-auto"><a class="btn btn-outline-success" href="?type={{ report_type }}&export=excel">Excel</a></div>
+    <div class="col-auto"><a class="btn btn-outline-success" href="?type={{ report_type }}&export=pdf">PDF</a></div>
+</form>
+<div class="card"><table class="table mb-0"><thead><tr><th>Code</th><th>Name</th><th>Category</th><th>Qty</th><th>Cost</th><th>Selling</th><th>Expiry</th></tr></thead>
+<tbody>{% for p in products %}<tr><td>{{ p.product_code }}</td><td>{{ p.name }}</td><td>{{ p.category.name }}</td><td>{{ p.quantity }}</td><td>₱{{ p.cost_price }}</td><td>₱{{ p.selling_price }}</td><td>{{ p.expiration_date|default:"—" }}</td></tr>
+{% empty %}<tr><td colspan="7" class="text-center text-muted py-3">No products found.</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

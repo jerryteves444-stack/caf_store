@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Sales History{% endblock %}
+{% block content %}
+<h3 class="mb-4">Sales History</h3>
+<form method="get" class="row g-2 mb-3">
+    <div class="col-auto"><input class="form-control" name="q" placeholder="Invoice # or customer" value="{{ request.GET.q }}"></div>
+    <div class="col-auto">
+        <select name="status" class="form-select">
+            <option value="">All statuses</option>
+            <option value="PAID">Paid</option>
+            <option value="PARTIAL">Partially Paid</option>
+            <option value="UNPAID">Unpaid</option>
+        </select>
+    </div>
+    <div class="col-auto"><button class="btn btn-outline-secondary">Filter</button></div>
+</form>
+<div class="card">
+<table class="table table-hover mb-0">
+    <thead><tr><th>Invoice</th><th>Customer</th><th>Cashier</th><th>Products</th><th>Total</th><th>Payment</th><th>Status</th><th>Date</th><th></th></tr></thead>
+    <tbody>
+    {% for s in sales %}
+    <tr>
+        <td><a href="{% url 'sales:sale_receipt' s.pk %}">{{ s.invoice_number }}</a></td>
+        <td>{{ s.customer.name|default:"Walk-in" }}</td>
+        <td>{{ s.cashier.username }}</td>
+        <td>{{ s.items.count }} item(s)</td>
+        <td>₱{{ s.total_amount }}</td>
+        <td>{{ s.get_payment_method_display }}</td>
+        <td><span class="badge bg-info text-dark">{{ s.get_payment_status_display }}</span>{% if s.is_voided %}<span class="badge bg-secondary">Voided</span>{% endif %}</td>
+        <td>{{ s.created_at|date:"M d, Y H:i" }}</td>
+        <td>
+            {% if user.is_manager and not s.is_voided %}
+            <form method="post" action="{% url 'sales:sale_void' s.pk %}" onsubmit="return confirm('Void this sale and restore stock?');" class="d-inline">
+                {% csrf_token %}<button class="btn btn-sm btn-outline-danger">Void</button>
+            </form>
+            {% endif %}
+        </td>
+    </tr>
+    {% empty %}<tr><td colspan="9" class="text-center text-muted py-3">No sales recorded yet.</td></tr>{% endfor %}
+    </tbody>
+</table>
+</div>
+{% include "partials/pagination.html" %}
+{% endblock %}

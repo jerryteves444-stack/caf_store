@@ -1,0 +1,180 @@
+/* =============================================================
+   "Banana Whip" theme — soft, warm, minimalist.
+   A pale banana-cream gradient backdrop, flattened cards, a
+   muted golden accent instead of default Bootstrap blue, and a
+   lighter, quieter sidebar. Dark mode gets a matching deep,
+   muted variant instead of the harsh pure-black default.
+   ============================================================= */
+
+:root {
+    --sidebar-width: 260px;
+
+    /* Banana Whip palette */
+    --banana-50:  #fffdf7;
+    --banana-100: #fff8e6;
+    --banana-200: #fff0c2;
+    --banana-300: #ffe89a;
+    --banana-accent: #e2a611;   /* muted golden-mustard, replaces bs-primary */
+    --banana-accent-dark: #b9860a;
+    --banana-ink: #4a4130;      /* warm near-black for text on cream */
+    --banana-muted: #8a7f66;
+
+    --bs-primary: var(--banana-accent);
+    --bs-primary-rgb: 226, 166, 17;
+}
+
+/* ---- Background --------------------------------------------------- */
+body {
+    background: linear-gradient(160deg, var(--banana-50) 0%, var(--banana-100) 45%, var(--banana-200) 100%);
+    background-attachment: fixed;
+    color: var(--banana-ink);
+}
+
+[data-bs-theme="dark"] body {
+    background: linear-gradient(160deg, #1c1a15 0%, #23201a 50%, #2a2416 100%);
+    background-attachment: fixed;
+    color: #f1ead9;
+}
+
+/* ---- Minimalist card style ------------------------------------------ */
+.card {
+    border: 1px solid rgba(74, 65, 48, 0.08);
+    box-shadow: none;
+    border-radius: 0.6rem;
+    background-color: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(2px);
+}
+[data-bs-theme="dark"] .card {
+    background-color: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+.card-header {
+    background-color: transparent;
+    border-bottom: 1px solid rgba(74, 65, 48, 0.08);
+    font-weight: 600;
+}
+
+.stat-card .stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+}
+
+/* ---- Buttons: quieter, flatter, golden accent ----------------------- */
+.btn {
+    border-radius: 0.5rem;
+    box-shadow: none;
+}
+.btn-primary {
+    background-color: var(--banana-accent);
+    border-color: var(--banana-accent);
+    color: #2b2410;
+}
+.btn-primary:hover, .btn-primary:focus {
+    background-color: var(--banana-accent-dark);
+    border-color: var(--banana-accent-dark);
+    color: #2b2410;
+}
+.btn-outline-primary {
+    color: var(--banana-accent-dark);
+    border-color: var(--banana-accent);
+}
+.btn-outline-primary:hover {
+    background-color: var(--banana-accent);
+    border-color: var(--banana-accent);
+    color: #2b2410;
+}
+
+/* ---- Sidebar: lighter, quieter (overrides the bg-dark/text-white
+   utility classes used in base.html so we don't need to touch every
+   nav-link individually) --------------------------------------------- */
+.sidebar {
+    width: var(--sidebar-width);
+    min-height: 100vh;
+    position: sticky;
+    top: 0;
+}
+.sidebar.bg-dark {
+    background-color: var(--banana-100) !important;
+    border-right: 1px solid rgba(74, 65, 48, 0.08);
+}
+.sidebar.bg-dark .text-white,
+.sidebar.bg-dark a.text-white {
+    color: var(--banana-ink) !important;
+}
+.sidebar .nav-link.active,
+.sidebar .nav-link:hover {
+    background-color: var(--banana-200);
+    color: var(--banana-ink) !important;
+    border-radius: 0.5rem;
+}
+[data-bs-theme="dark"] .sidebar.bg-dark {
+    background-color: #201d16 !important;
+    border-right: 1px solid rgba(255,255,255,0.06);
+}
+[data-bs-theme="dark"] .sidebar.bg-dark .text-white {
+    color: #f1ead9 !important;
+}
+
+.navbar.bg-body {
+    background-color: transparent !important;
+    border-bottom: 1px solid rgba(74, 65, 48, 0.08) !important;
+    backdrop-filter: blur(4px);
+}
+
+.main-content {
+    min-width: 0;
+}
+
+/* ---- Tables: minimal lines, no heavy zebra ---------------------------- */
+.table {
+    --bs-table-bg: transparent;
+}
+.table thead th {
+    border-bottom-width: 1px;
+    font-weight: 600;
+    color: var(--banana-muted);
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.02em;
+}
+
+/* ---- Auth screen (login) ---------------------------------------------- */
+.auth-shell {
+    background: linear-gradient(160deg, var(--banana-100) 0%, var(--banana-200) 55%, var(--banana-300) 100%);
+    min-height: 100vh;
+}
+.auth-card {
+    border: 1px solid rgba(74, 65, 48, 0.08);
+    box-shadow: 0 8px 30px rgba(74, 65, 48, 0.08);
+    border-radius: 1rem;
+}
+
+@media (max-width: 767.98px) {
+    .sidebar {
+        position: fixed;
+        z-index: 1040;
+        left: -100%;
+        transition: left 0.2s ease-in-out;
+    }
+    .sidebar.show { left: 0; }
+}
+
+.pos-product-card {
+    cursor: pointer;
+    transition: transform .1s, box-shadow .1s;
+    border-radius: 0.6rem;
+}
+.pos-product-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 14px rgba(74, 65, 48, 0.12);
+}
+
+.receipt-box {
+    max-width: 480px;
+    margin: 0 auto;
+    font-family: 'Courier New', monospace;
+}
+
+@media print {
+    .no-print { display: none !important; }
+}

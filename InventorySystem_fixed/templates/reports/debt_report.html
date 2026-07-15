@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Debt Report{% endblock %}
+{% block content %}
+<h3 class="mb-4">Debt Report</h3>
+<form method="get" class="row g-2 mb-3">
+    <div class="col-auto">
+        <select name="status" class="form-select">
+            <option value="">All</option>
+            <option value="PAID" {% if status == "PAID" %}selected{% endif %}>Paid</option>
+            <option value="PARTIAL" {% if status == "PARTIAL" %}selected{% endif %}>Partially Paid</option>
+            <option value="UNPAID" {% if status == "UNPAID" %}selected{% endif %}>Unpaid</option>
+            <option value="OVERDUE" {% if status == "OVERDUE" %}selected{% endif %}>Overdue</option>
+        </select>
+    </div>
+    <div class="col-auto"><button class="btn btn-outline-secondary">Apply</button></div>
+    <div class="col-auto"><a class="btn btn-outline-success" href="?status={{ status }}&export=csv">CSV</a></div>
+    <div class="col-auto"><a class="btn btn-outline-success" href="?status={{ status }}&export=excel">Excel</a></div>
+    <div class="col-auto"><a class="btn btn-outline-success" href="?status={{ status }}&export=pdf">PDF</a></div>
+</form>
+<div class="card"><table class="table mb-0"><thead><tr><th>Customer</th><th>Total</th><th>Paid</th><th>Balance</th><th>Due</th><th>Status</th></tr></thead>
+<tbody>{% for d in debts %}<tr><td>{{ d.customer.name }}</td><td>₱{{ d.total_amount }}</td><td>₱{{ d.amount_paid }}</td><td>₱{{ d.remaining_balance }}</td><td>{{ d.due_date }}</td><td>{{ d.get_payment_status_display }}</td></tr>
+{% empty %}<tr><td colspan="6" class="text-center text-muted py-3">No records found.</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

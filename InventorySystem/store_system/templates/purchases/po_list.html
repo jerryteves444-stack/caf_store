@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Purchase Orders{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">Purchase Orders</h3>
+    <a href="{% url 'purchases:po_add' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New Purchase Order</a>
+</div>
+<div class="card">
+<table class="table table-hover mb-0">
+    <thead><tr><th>PO #</th><th>Supplier</th><th>Status</th><th>Expected</th><th>Date</th><th></th></tr></thead>
+    <tbody>
+    {% for po in purchase_orders %}
+    <tr>
+        <td>{{ po.po_number }}</td><td>{{ po.supplier.company_name }}</td>
+        <td><span class="badge bg-secondary">{{ po.get_status_display }}</span></td>
+        <td>{{ po.expected_date|default:"—" }}</td><td>{{ po.created_at|date:"M d, Y" }}</td>
+        <td><a href="{% url 'purchases:po_detail' po.pk %}" class="btn btn-sm btn-outline-secondary">View</a></td>
+    </tr>
+    {% empty %}<tr><td colspan="6" class="text-center text-muted py-3">No purchase orders yet.</td></tr>{% endfor %}
+    </tbody>
+</table>
+</div>
+{% include "partials/pagination.html" %}
+{% endblock %}

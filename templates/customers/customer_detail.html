@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}{{ customer.name }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3">
+    <h3>{{ customer.name }}</h3>
+    <a href="{% url 'customers:customer_statement' customer.pk %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-printer"></i> Print Statement</a>
+</div>
+<div class="row g-3 mb-4">
+    <div class="col-md-4"><div class="card"><div class="card-body"><div class="text-muted small">Credit Limit</div><div class="fs-4 fw-bold">₱{{ customer.credit_limit }}</div></div></div></div>
+    <div class="col-md-4"><div class="card"><div class="card-body"><div class="text-muted small">Outstanding Balance</div><div class="fs-4 fw-bold text-danger">₱{{ customer.total_outstanding_balance }}</div></div></div></div>
+    <div class="col-md-4"><div class="card"><div class="card-body"><div class="text-muted small">Available Credit</div><div class="fs-4 fw-bold">₱{{ customer.available_credit }}</div></div></div></div>
+</div>
+<div class="card mb-3"><div class="card-header">Debt / Credit Records</div>
+<table class="table mb-0"><thead><tr><th>Total</th><th>Paid</th><th>Balance</th><th>Due</th><th>Status</th><th></th></tr></thead>
+<tbody>{% for d in debts %}<tr><td>₱{{ d.total_amount }}</td><td>₱{{ d.amount_paid }}</td><td>₱{{ d.remaining_balance }}</td><td>{{ d.due_date }}</td>
+<td><span class="badge bg-secondary">{{ d.get_payment_status_display }}</span></td>
+<td><a href="{% url 'customers:debt_detail' d.pk %}" class="btn btn-sm btn-outline-secondary">View</a></td></tr>
+{% empty %}<tr><td colspan="6" class="text-center text-muted py-3">No credit history.</td></tr>{% endfor %}</tbody></table></div>
+<div class="card"><div class="card-header">Purchase History</div>
+<table class="table mb-0"><thead><tr><th>Invoice</th><th>Total</th><th>Date</th></tr></thead>
+<tbody>{% for s in sales %}<tr><td><a href="{% url 'sales:sale_receipt' s.pk %}">{{ s.invoice_number }}</a></td><td>₱{{ s.total_amount }}</td><td>{{ s.created_at|date:"M d, Y" }}</td></tr>
+{% empty %}<tr><td colspan="3" class="text-center text-muted py-3">No purchases yet.</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}{{ product.name }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">{{ product.name }} <small class="text-muted">({{ product.product_code }})</small></h3>
+    <div>
+        <a href="{% url 'pricing:price_override' product.pk %}" class="btn btn-outline-primary btn-sm">Override Price</a>
+        <a href="{% url 'inventory:product_edit' product.pk %}" class="btn btn-outline-secondary btn-sm">Edit</a>
+    </div>
+</div>
+<div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">Quantity</div><div class="fs-4 fw-bold">{{ product.quantity }}</div></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">Cost Price</div><div class="fs-4 fw-bold">₱{{ product.cost_price }}</div></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">Selling Price</div><div class="fs-4 fw-bold">₱{{ product.current_price }}</div></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="text-muted small">Margin</div><div class="fs-4 fw-bold">₱{{ product.margin }}</div></div></div></div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-4">
+        {% if product.barcode_image %}<div class="card mb-3"><div class="card-body text-center"><img src="{{ product.barcode_image.url }}" class="img-fluid"></div></div>{% endif %}
+        {% if product.qr_code_image %}<div class="card"><div class="card-body text-center"><img src="{{ product.qr_code_image.url }}" width="150"></div></div>{% endif %}
+    </div>
+    <div class="col-md-8">
+        <div class="card mb-3">
+            <div class="card-header">Adjust Stock</div>
+            <div class="card-body">
+                <form method="post" action="{% url 'inventory:product_adjust_stock' product.pk %}" class="row g-2">
+                    {% csrf_token %}
+                    <div class="col-auto">{{ adjustment_form.action }}</div>
+                    <div class="col-auto">{{ adjustment_form.quantity }}</div>
+                    <div class="col-auto">{{ adjustment_form.batch_number }}</div>
+                    <div class="col-auto"><button class="btn btn-primary" type="submit">Apply</button></div>
+                </form>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">Recent Inventory Transactions</div>
+            <table class="table mb-0">
+                <thead><tr><th>Type</th><th>Qty</th><th>By</th><th>Date</th></tr></thead>
+                <tbody>
+                {% for t in transactions %}
+                <tr><td>{{ t.get_transaction_type_display }}</td><td>{{ t.quantity }}</td><td>{{ t.performed_by }}</td><td>{{ t.created_at|date:"M d, H:i" }}</td></tr>
+                {% empty %}<tr><td colspan="4" class="text-muted text-center py-2">No transactions yet.</td></tr>{% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

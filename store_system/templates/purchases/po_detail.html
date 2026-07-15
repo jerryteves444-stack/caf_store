@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}{{ po.po_number }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3">
+    <h3>Purchase Order {{ po.po_number }}</h3>
+    {% if po.status != "RECEIVED" %}<a href="{% url 'purchases:po_receive' po.pk %}" class="btn btn-success">Receive Delivery</a>{% endif %}
+</div>
+<p>Supplier: {{ po.supplier.company_name }} | Status: <span class="badge bg-secondary">{{ po.get_status_display }}</span> | Expected: {{ po.expected_date|default:"—" }}</p>
+<div class="card"><div class="card-header">Line Items (Total: ₱{{ po.total_cost }})</div>
+<table class="table mb-0"><thead><tr><th>Item</th><th>Ordered</th><th>Received</th><th>Unit Cost</th><th>Line Total</th></tr></thead>
+<tbody>{% for item in items %}<tr><td>{{ item.product|default:item.meat }}</td><td>{{ item.quantity_ordered }}</td><td>{{ item.quantity_received }}</td><td>₱{{ item.unit_cost }}</td><td>₱{{ item.line_total }}</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}
