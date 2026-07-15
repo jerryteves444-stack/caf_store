@@ -5,9 +5,20 @@ Environment-driven so the same codebase runs against SQLite in development
 and PostgreSQL in production. See .env.example for all supported variables.
 """
 import os
+import urllib.parse
 from pathlib import Path
 from datetime import timedelta
 from decouple import config, Csv
+
+# Don't rely on VERCEL=1 alone - Vercel only guarantees that at build time
+# unless "Automatically expose System Environment Variables" is turned on
+# for the project, which isn't the default. VERCEL_URL and the Lambda
+# runtime marker are both reliably present in the actual running function.
+ON_VERCEL = bool(
+    os.environ.get("VERCEL_URL")
+    or os.environ.get("VERCEL") == "1"
+    or os.environ.get("AWS_LAMBDA_FUNCTION_NAME")
+)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -17,6 +28,21 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config("SECRET_KEY", default="django-insecure-change-me-in-production")
 DEBUG = config("DEBUG", default=True, cast=bool)
 ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost,127.0.0.1", cast=Csv())
+CSRF_TRUSTED_ORIGINS = config("CSRF_TRUSTED_ORIGINS", default="", cast=Csv())
+
+# Vercel terminates TLS at the edge and forwards requests over HTTP, so tell
+# Django to trust the X-Forwarded-Proto header when deciding if a request is
+# secure (needed for CSRF checks and SECURE_SSL_REDIRECT to behave correctly).
+if ON_VERCEL:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+_vercel_url = os.environ.get("VERCEL_URL")
+if _vercel_url:
+    ALLOWED_HOSTS.append(_vercel_url)
+    CSRF_TRUSTED_ORIGINS.append(f"https://{_vercel_url}")
+_vercel_project_domain = os.environ.get("VERCEL_PROJECT_PRODUCTION_URL")
+if _vercel_project_domain:
+    ALLOWED_HOSTS.append(_vercel_project_domain)
+    CSRF_TRUSTED_ORIGINS.append(f"https://{_vercel_project_domain}")
 
 # ---------------------------------------------------------------------------
 # Applications
@@ -91,7 +117,24 @@ ASGI_APPLICATION = "config.asgi.application"
 # ---------------------------------------------------------------------------
 # Database
 # ---------------------------------------------------------------------------
-if config("DB_ENGINE", default="sqlite") == "postgres":
+# Vercel (and most managed Postgres providers - Neon, Supabase, Vercel Postgres)
+# inject a single DATABASE_URL env var. Prefer that when present.
+_database_url = os.environ.get("DATABASE_URL")
+if _database_url:
+    _url = urllib.parse.urlparse(_database_url)
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": _url.path.lstrip("/"),
+            "USER": _url.username,
+            "PASSWORD": _url.password,
+            "HOST": _url.hostname,
+            "PORT": _url.port or "5432",
+            "CONN_MAX_AGE": 60,
+            "OPTIONS": {"sslmode": "require"},
+        }
+    }
+elif config("DB_ENGINE", default="sqlite") == "postgres":
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
@@ -163,7 +206,20 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
+# Same reasoning as logging above: probe writability rather than trusting an
+# env var that may not be present in the running function. Note this still
+# doesn't make uploads persist on Vercel (/tmp is wiped between
+# invocations) - it just prevents a crash. Wire up S3/Cloudinary via
+# django-storages for real persistence.
+_media_root = BASE_DIR / "media"
+try:
+    os.makedirs(_media_root, exist_ok=True)
+    if not os.access(_media_root, os.W_OK):
+        raise OSError("media dir not writable")
+    MEDIA_ROOT = _media_root
+except OSError:
+    MEDIA_ROOT = Path("/tmp/media")
+    os.makedirs(MEDIA_ROOT, exist_ok=True)
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -182,8 +238,9 @@ DEFAULT_TAX_RATE = config("DEFAULT_TAX_RATE", default=0.12, cast=float)  # 12% V
 CURRENCY_SYMBOL = config("CURRENCY_SYMBOL", default="₱")
 
 # ---------------------------------------------------------------------------
-# Logging (errors -> file + console)
+# Logging (errors -> file + console, when the filesystem allows it)
 # ---------------------------------------------------------------------------
+_log_handlers = ["console"]
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -192,18 +249,31 @@ LOGGING = {
     },
     "handlers": {
         "console": {"class": "logging.StreamHandler", "formatter": "verbose"},
-        "file": {
-            "class": "logging.handlers.RotatingFileHandler",
-            "filename": BASE_DIR / "logs" / "app.log",
-            "maxBytes": 5 * 1024 * 1024,
-            "backupCount": 5,
-            "formatter": "verbose",
-        },
     },
     "root": {"handlers": ["console"], "level": "INFO"},
     "loggers": {
-        "django": {"handlers": ["console", "file"], "level": "INFO", "propagate": False},
-        "store_system": {"handlers": ["console", "file"], "level": "DEBUG", "propagate": False},
+        "django": {"handlers": _log_handlers, "level": "INFO", "propagate": False},
+        "store_system": {"handlers": _log_handlers, "level": "DEBUG", "propagate": False},
     },
 }
-os.makedirs(BASE_DIR / "logs", exist_ok=True)
+# Don't trust env-var platform detection here - serverless platforms don't
+# always expose it to the running function the way they do at build time.
+# Instead, actually try to create the logs directory; only wire up the file
+# handler if that succeeds, so a read-only filesystem (Vercel, most
+# serverless platforms) degrades to console-only logging instead of crashing
+# the whole app on startup. Console output is captured by Vercel's own logs.
+try:
+    os.makedirs(BASE_DIR / "logs", exist_ok=True)
+    _logs_writable = os.access(BASE_DIR / "logs", os.W_OK)
+except OSError:
+    _logs_writable = False
+
+if _logs_writable:
+    LOGGING["handlers"]["file"] = {
+        "class": "logging.handlers.RotatingFileHandler",
+        "filename": BASE_DIR / "logs" / "app.log",
+        "maxBytes": 5 * 1024 * 1024,
+        "backupCount": 5,
+        "formatter": "verbose",
+    }
+    _log_handlers.append("file")
